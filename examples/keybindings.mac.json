@@ -1,0 +1,12 @@
+[
+  {
+    "key": "cmd+alt+x",
+    "command": "workbench.view.extension.mooXBrowser",
+    "when": "activeViewlet != 'workbench.view.extension.mooXBrowser'"
+  },
+  {
+    "key": "cmd+alt+x",
+    "command": "workbench.view.scm",
+    "when": "activeViewlet == 'workbench.view.extension.mooXBrowser'"
+  }
+]

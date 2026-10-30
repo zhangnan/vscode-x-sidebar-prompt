@@ -1,0 +1,14 @@
+{
+  "version": "1.139.0",
+  "commit": "2242ebbb54efeeb0129e08e919e7e8d43033cd83",
+  "replacements": [
+    {
+      "before": "async _applyTouchAndMedia(){if(!this.isSafeToApplyEmulation())return;let e=this._device,t=!!this._device?.mobile;",
+      "after": "async _applyTouchAndMedia(){if(!this.isSafeToApplyEmulation())return;let e=this._device,t=!!this._device?.mobile&&!this._device?.mooMouseHover;"
+    },
+    {
+      "before": "features:this._device?[{name:\"pointer\",value:t?\"coarse\":\"fine\"}]:[]",
+      "after": "features:this._device?[{name:\"pointer\",value:t?\"coarse\":\"fine\"},...(e?.mooMouseHover?[{name:\"hover\",value:\"hover\"}]:[])]:[]"
+    }
+  ]
+}

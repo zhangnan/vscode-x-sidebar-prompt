@@ -1,0 +1,36 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+(async()=>{
+let command, handler, creations=0,disposed=0,timer,overlay=false,paneVisible=true;
+const events=[];
+let index=0;const models=new Map();
+function make(){const id='native-'+ ++index;const model={id,onDidKeyCommand:fn=>{model.keyHandler=fn;return{dispose(){}}},setDevice:async device=>events.push(['device',id,device]),loadURL:async url=>events.push(['url',id,url]),layout:async rect=>events.push(['layout',id,rect]),setVisible:async visible=>events.push(['visible',id,visible]),reload:async hard=>events.push(['reload',id,hard]),goBack:async()=>events.push(['back',id])};models.set(id,model);return {id,resolve:async()=>model,dispose:()=>{disposed++}}}
+let paneWidth=320,paneHeight=600;
+const pane={isBodyVisible:()=>paneVisible,_container:{isConnected:true,getBoundingClientRect:()=>({left:48,top:95,width:paneWidth,height:paneHeight})}};
+const service={_resolveStorageScope:async()=>'global',createBrowserView:async(options,editor)=>{creations++;assert.equal(editor,undefined);assert.equal(options.session.scope,'global');return make()},registerOpenHandler:h=>{handler=h;return{dispose(){}}}};
+const context={qe:{registerCommand:(name,fn)=>{assert.equal(name,'_mooXBrowser.nativeSidebar');command=fn}},Jl:'browser',oi:'views',be:'commands',document:{querySelectorAll:()=>overlay?[{getBoundingClientRect:()=>({height:20})}]:[]},getComputedStyle:()=>({visibility:'visible'}),ht:{vscodeWindowId:1},kv:()=>1,window:{},console,setTimeout:fn=>{timer=fn;return 1},clearTimeout:()=>{}};
+vm.runInNewContext(fs.readFileSync(__dirname+'/../patches/native-sidebar-bridge.js','utf8'),context);
+const accessor={get:key=>key==='browser'?service:key==='commands'?{executeCommand:async name=>events.push(['command',name])}:{getViewWithId:()=>pane}};
+assert.equal(creations,0);
+await command(accessor,'hide');assert.equal(creations,0);
+await command(accessor,'show');assert.equal(creations,1);
+assert(events.some(e=>e[0]==='layout'&&e[2].width===320&&e[2].emulation.scale===1));
+assert(events.some(e=>e[0]==='device'&&e[2].mobile===true&&!e[2].width&&!e[2].height&&e[2].userAgent.includes('Mobile')));
+assert(events.findIndex(e=>e[0]==='device')<events.findIndex(e=>e[0]==='url'));
+assert(events.some(e=>e[0]==='visible'&&e[2]===true));
+paneWidth=410;paneHeight=740;await timer();assert(events.some(e=>e[0]==='layout'&&e[2].width===410&&e[2].height===740&&e[2].emulation.scale===1));
+models.get('native-1').keyHandler({code:'KeyX',metaKey:true,altKey:true});await Promise.resolve();assert(events.some(e=>e[0]==='command'&&e[1]==='mooXBrowser.toggle'));
+await command(accessor,'hide');assert.equal(events.at(-1)[2],false);
+await command(accessor,'show');assert.equal(creations,1);
+overlay=true;await timer();assert.equal(events.at(-1)[2],false);
+overlay=false;await timer();assert.equal(events.at(-1)[2],true);
+assert.equal(handler.shouldOpenEditor(make(),{type:'user'},{parentViewId:'unrelated'}),true);
+const child=make();assert.equal(handler.shouldOpenEditor(child,{type:'user'},{parentViewId:'native-1'}),false);
+await new Promise(resolve=>setImmediate(resolve));
+models.get(child.id).canGoBack=true;
+await command(accessor,'back');assert.equal(disposed,0);assert.deepEqual(events.at(-1),['back',child.id]);
+models.get(child.id).canGoBack=false;
+await command(accessor,'back');assert.equal(disposed,1);
+await command(accessor,'reload');assert(events.some(e=>e[0]==='reload'));
+await command(accessor,'destroy');assert.equal(disposed,2);
+console.log('Sidebar bridge checks passed: lazy opening, native layout, hide/show, overlay hiding, media navigation, back, refresh, cleanup.');
+})().catch(error=>{console.error(error);process.exitCode=1});

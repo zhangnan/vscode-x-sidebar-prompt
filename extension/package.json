@@ -1,0 +1,86 @@
+{
+  "name": "x-browser-sidebar",
+  "displayName": "X 浏览器侧栏",
+  "description": "点击活动栏，在侧栏显示真实 X 网页；保留本机阅读样式和登录状态。",
+  "version": "0.1.0",
+  "publisher": "moo-local",
+  "engines": {
+    "vscode": "^1.139.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onView:mooXBrowser.view"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mooXBrowser",
+          "title": "X 浏览器",
+          "icon": "media/x-browser.svg"
+        }
+      ]
+    },
+    "views": {
+      "mooXBrowser": [
+        {
+          "id": "mooXBrowser.view",
+          "name": "X 浏览器",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mooXBrowser.open",
+        "title": "X 浏览器: 打开侧栏"
+      },
+      {
+        "command": "mooXBrowser.back",
+        "title": "X 浏览器: 返回",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "mooXBrowser.home",
+        "title": "X 浏览器: 主页",
+        "icon": "$(home)"
+      },
+      {
+        "command": "mooXBrowser.reload",
+        "title": "X 浏览器: 刷新",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mooXBrowser.toggle",
+        "title": "X 浏览器: 与源代码管理切换"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mooXBrowser.home",
+          "when": "view == mooXBrowser.view",
+          "group": "navigation@2"
+        },
+        {
+          "command": "mooXBrowser.reload",
+          "when": "view == mooXBrowser.view",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "mooXBrowser.toggle",
+        "key": "ctrl+alt+x",
+        "mac": "cmd+alt+x"
+      }
+    ]
+  }
+}
